@@ -1,7 +1,12 @@
-import flights_data
+"""
+This module contains the functions to query the database.
+"""
+import csv
+import os
 from datetime import datetime
 import sqlalchemy
-import csv
+import flights_data
+
 
 IATA_LENGTH = 3
 
@@ -25,7 +30,7 @@ def delayed_flights_by_airport():
     valid = False
     while not valid:
         airport_input = input("Enter origin airport IATA code: ")
-        # Valide input
+        # Validate input
         if airport_input.isalpha() and len(airport_input) == IATA_LENGTH:
             valid = True
     results = flights_data.get_delayed_flights_by_airport(airport_input)
@@ -41,8 +46,8 @@ def flight_by_id():
     while not valid:
         try:
             id_input = int(input("Enter flight ID: "))
-        except Exception as e:
-            print("Try again...")
+        except ValueError:
+            print("Try again... Please enter a number.")
         else:
             valid = True
     results = flights_data.get_flight_by_id(id_input)
@@ -75,12 +80,11 @@ def print_results(results):
     """
     print(f"Got {len(results)} results.")
     for result in results:
-        # turn result into dictionary
-        result = result._mapping
 
         # Check that all required columns are in place
         try:
-            delay = int(result['DELAY']) if result['DELAY'] else 0  # If delay columns is NULL, set it to 0
+            # If delay columns is NULL, set it to 0
+            delay = int(result['DELAY']) if result['DELAY'] else 0
             origin = result['ORIGIN_AIRPORT']
             dest = result['DESTINATION_AIRPORT']
             airline = result['AIRLINE']
@@ -93,25 +97,33 @@ def print_results(results):
             print(f"{result['ID']}. {origin} -> {dest} by {airline}, Delay: {delay} Minutes")
         else:
             print(f"{result['ID']}. {origin} -> {dest} by {airline}")
-    
+
     export_choice = input("\nWould you like to export this data to a CSV file? (y/n)\n")
-    
+
     if export_choice.lower() == "y":
-        export_to_csv(results)
+        filename = input("Enter a filename (e.g. delayed_flights.csv): ")
+        if filename == "":
+            filename = "delayed_flights.csv"
+        if not filename.endswith(".csv"):
+            filename += ".csv"
+        export_to_csv(results, filename)
     else:
         return
-        
-def export_to_csv(results):
+
+def export_to_csv(results, filename):
     """
     Export the results to a CSV file.
     """
-    with open("delayed_flights.csv", "w", newline="") as csv_file:
+    if not os.path.exists("data/output"):
+        os.makedirs("data/output")
+
+    with open(f"data/output/{filename}", "w", newline="", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow([
-            "ID", 
-            "ORIGIN_AIRPORT", 
-            "DESTINATION_AIRPORT", 
-            "AIRLINE", 
+            "ID",
+            "ORIGIN_AIRPORT",
+            "DESTINATION_AIRPORT",
+            "AIRLINE",
             "DELAY"
         ])
         for result in results:
@@ -122,9 +134,9 @@ def export_to_csv(results):
                 result['AIRLINE'],
                 result['DELAY']
             ])
-    
-    print("Data exported to delayed_flights.csv")
-   
+
+    print(f"Data exported to {filename}")
+
 def show_menu_and_get_input():
     """
     Show the menu and get user input.
@@ -141,13 +153,10 @@ def show_menu_and_get_input():
             choice = int(input())
             if choice in FUNCTIONS:
                 return FUNCTIONS[choice][0]
-        except ValueError as e:
+        except ValueError:
             pass
         print("Try again...")
 
-"""
-Function Dispatch Dictionary
-"""
 FUNCTIONS = { 1: (flight_by_id, "Show flight by ID"),
               2: (flights_by_date, "Show flights by date"),
               3: (delayed_flights_by_airline, "Delayed flights by airline"),
@@ -156,10 +165,10 @@ FUNCTIONS = { 1: (flight_by_id, "Show flight by ID"),
              }
 
 def main():
-
+    """ Runs the main menu loop of the application. """
     # The Main Menu loop
     while True:
-        choice_func = show_menu_and_get_input()
+        choice_func= show_menu_and_get_input()
         choice_func()
 
 
