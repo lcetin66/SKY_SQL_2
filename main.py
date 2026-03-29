@@ -1,6 +1,7 @@
 import flights_data
 from datetime import datetime
 import sqlalchemy
+import csv
 
 IATA_LENGTH = 3
 
@@ -30,7 +31,6 @@ def delayed_flights_by_airport():
     results = flights_data.get_delayed_flights_by_airport(airport_input)
     print_results(results)
 
-
 def flight_by_id():
     """
     Asks the user for a numeric flight ID,
@@ -47,7 +47,6 @@ def flight_by_id():
             valid = True
     results = flights_data.get_flight_by_id(id_input)
     print_results(results)
-
 
 def flights_by_date():
     """
@@ -66,7 +65,6 @@ def flights_by_date():
             valid = True
     results = flights_data.get_flights_by_date(date.day, date.month, date.year)
     print_results(results)
-
 
 def print_results(results):
     """
@@ -95,8 +93,38 @@ def print_results(results):
             print(f"{result['ID']}. {origin} -> {dest} by {airline}, Delay: {delay} Minutes")
         else:
             print(f"{result['ID']}. {origin} -> {dest} by {airline}")
-
-
+    
+    export_choice = input("\nWould you like to export this data to a CSV file? (y/n)\n")
+    
+    if export_choice.lower() == "y":
+        export_to_csv(results)
+    else:
+        return
+        
+def export_to_csv(results):
+    """
+    Export the results to a CSV file.
+    """
+    with open("delayed_flights.csv", "w", newline="") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow([
+            "ID", 
+            "ORIGIN_AIRPORT", 
+            "DESTINATION_AIRPORT", 
+            "AIRLINE", 
+            "DELAY"
+        ])
+        for result in results:
+            writer.writerow([
+                result['ID'],
+                result['ORIGIN_AIRPORT'],
+                result['DESTINATION_AIRPORT'],
+                result['AIRLINE'],
+                result['DELAY']
+            ])
+    
+    print("Data exported to delayed_flights.csv")
+   
 def show_menu_and_get_input():
     """
     Show the menu and get user input.
@@ -126,7 +154,6 @@ FUNCTIONS = { 1: (flight_by_id, "Show flight by ID"),
               4: (delayed_flights_by_airport, "Delayed flights by origin airport"),
               5: (quit, "Exit")
              }
-
 
 def main():
 
